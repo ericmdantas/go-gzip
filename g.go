@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"strconv"
 )
 
@@ -14,13 +15,37 @@ const (
 	am = 100000
 )
 
+type mrWriter interface {
+	Write([]byte) (int, error)
+	Close() error
+	Flush() error
+}
+
+type newWriter interface {
+	NewWrite(*[]byte)
+}
+
 type todo struct {
 	ID  int    `json:"id"`
 	Msg string `json:"msg"`
 }
 
-func cmp() {
+type info struct {
+	k string
+	b []byte
+	p os.FileMode
+}
 
+func cmp(mw mrWriter, b []byte) {
+	mw.Write(b)
+	mw.Close()
+	mw.Flush()
+}
+
+func writeFiles(infos [4]info) {
+	for _, v := range infos {
+		ioutil.WriteFile(v.k, v.b, v.p)
+	}
 }
 
 func main() {
@@ -33,26 +58,25 @@ func main() {
 		})
 	}
 
-	var b bytes.Buffer
-
 	bTs, _ := json.Marshal(ts)
+
+	var b bytes.Buffer
+	var z bytes.Buffer
 
 	gz := gzip.NewWriter(&b)
 	gzip.NewWriterLevel(gz, gzip.BestCompression)
-	gz.Write(bTs)
-	gz.Close()
-	gz.Flush()
-
-	var z bytes.Buffer
+	cmp(gz, bTs)
 
 	zl := zlib.NewWriter(&z)
 	zlib.NewWriterLevel(zl, zlib.BestCompression)
-	zl.Write(bTs)
-	zl.Close()
-	zl.Flush()
+	cmp(zl, bTs)
 
-	ioutil.WriteFile("g.gz", b.Bytes(), 0644)
-	ioutil.WriteFile("g.zlib", z.Bytes(), 0644)
-	ioutil.WriteFile("g.json", bTs, 0644)
-	ioutil.WriteFile("g.b64.txt", []byte(base64.StdEncoding.EncodeToString(bTs)), 0644)
+	var infos [4]info
+
+	infos[0] = info{k: "g.gz", b: b.Bytes(), p: 0644}
+	infos[1] = info{k: "g.zlib", b: z.Bytes(), p: 0644}
+	infos[2] = info{k: "g.json", b: bTs, p: 0644}
+	infos[3] = info{k: "g.b64.txt", b: []byte(base64.StdEncoding.EncodeToString(bTs)), p: 0644}
+
+	writeFiles(infos)
 }
