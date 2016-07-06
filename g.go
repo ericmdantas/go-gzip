@@ -62,7 +62,6 @@ func main() {
 	var b bytes.Buffer
 	var z bytes.Buffer
 	var l bytes.Buffer
-	var b2 bytes.Buffer
 
 	gz := gzip.NewWriter(&b)
 	gzip.NewWriterLevel(gz, gzip.BestCompression)
