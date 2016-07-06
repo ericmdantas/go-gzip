@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	"compress/lzw"
 	"compress/zlib"
 	"encoding/base64"
 	"encoding/json"
@@ -18,7 +19,6 @@ const (
 type mrWriter interface {
 	Write([]byte) (int, error)
 	Close() error
-	Flush() error
 }
 
 type newWriter interface {
@@ -39,10 +39,9 @@ type info struct {
 func cmp(mw mrWriter, b []byte) {
 	mw.Write(b)
 	mw.Close()
-	mw.Flush()
 }
 
-func writeFiles(infos [4]info) {
+func writeFiles(infos [6]info) {
 	for _, v := range infos {
 		ioutil.WriteFile(v.k, v.b, v.p)
 	}
@@ -62,6 +61,8 @@ func main() {
 
 	var b bytes.Buffer
 	var z bytes.Buffer
+	var l bytes.Buffer
+	var b2 bytes.Buffer
 
 	gz := gzip.NewWriter(&b)
 	gzip.NewWriterLevel(gz, gzip.BestCompression)
@@ -71,12 +72,17 @@ func main() {
 	zlib.NewWriterLevel(zl, zlib.BestCompression)
 	cmp(zl, bTs)
 
-	var infos [4]info
+	lz := lzw.NewWriter(&l, lzw.LSB, 8)
+	cmp(lz, bTs)
+
+	var infos [6]info
 
 	infos[0] = info{k: "g.gz", b: b.Bytes(), p: 0644}
 	infos[1] = info{k: "g.zlib", b: z.Bytes(), p: 0644}
-	infos[2] = info{k: "g.json", b: bTs, p: 0644}
-	infos[3] = info{k: "g.b64.txt", b: []byte(base64.StdEncoding.EncodeToString(bTs)), p: 0644}
+	infos[2] = info{k: "g.lzw", b: l.Bytes(), p: 0644}
+	infos[3] = info{k: "g.bzip2", b: l.Bytes(), p: 0644}
+	infos[4] = info{k: "g.json", b: bTs, p: 0644}
+	infos[5] = info{k: "g.b64.txt", b: []byte(base64.StdEncoding.EncodeToString(bTs)), p: 0644}
 
 	writeFiles(infos)
 }
