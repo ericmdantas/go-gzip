@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/flate"
 	"compress/gzip"
 	"compress/lzw"
 	"compress/zlib"
@@ -62,6 +63,7 @@ func main() {
 	var b bytes.Buffer
 	var z bytes.Buffer
 	var l bytes.Buffer
+	var f bytes.Buffer
 
 	gz := gzip.NewWriter(&b)
 	gzip.NewWriterLevel(gz, gzip.BestCompression)
@@ -74,12 +76,15 @@ func main() {
 	lz := lzw.NewWriter(&l, lzw.LSB, 8)
 	cmp(lz, bTs)
 
+	fl, _ := flate.NewWriter(&f, flate.BestCompression)
+	cmp(fl, bTs)
+
 	var infos [6]info
 
 	infos[0] = info{k: "g.gz", b: b.Bytes(), p: 0644}
 	infos[1] = info{k: "g.zlib", b: z.Bytes(), p: 0644}
 	infos[2] = info{k: "g.lzw", b: l.Bytes(), p: 0644}
-	infos[3] = info{k: "g.bzip2", b: l.Bytes(), p: 0644}
+	infos[3] = info{k: "g.flate", b: f.Bytes(), p: 0644}
 	infos[4] = info{k: "g.json", b: bTs, p: 0644}
 	infos[5] = info{k: "g.b64.txt", b: []byte(base64.StdEncoding.EncodeToString(bTs)), p: 0644}
 
