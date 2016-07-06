@@ -11,12 +11,16 @@ import (
 )
 
 const (
-	am = 10000000
+	am = 100000
 )
 
 type todo struct {
 	ID  int    `json:"id"`
 	Msg string `json:"msg"`
+}
+
+func cmp() {
+
 }
 
 func main() {
