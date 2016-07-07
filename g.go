@@ -60,23 +60,23 @@ func main() {
 
 	bTs, _ := json.Marshal(ts)
 
-	var b bytes.Buffer
-	var z bytes.Buffer
-	var l bytes.Buffer
-	var f bytes.Buffer
+	b := new(bytes.Buffer)
+	z := new(bytes.Buffer)
+	l := new(bytes.Buffer)
+	f := new(bytes.Buffer)
 
-	gz := gzip.NewWriter(&b)
+	gz := gzip.NewWriter(b)
 	gzip.NewWriterLevel(gz, gzip.BestCompression)
 	cmp(gz, bTs)
 
-	zl := zlib.NewWriter(&z)
+	zl := zlib.NewWriter(z)
 	zlib.NewWriterLevel(zl, zlib.BestCompression)
 	cmp(zl, bTs)
 
-	lz := lzw.NewWriter(&l, lzw.LSB, 8)
+	lz := lzw.NewWriter(l, lzw.LSB, 8)
 	cmp(lz, bTs)
 
-	fl, _ := flate.NewWriter(&f, flate.BestCompression)
+	fl, _ := flate.NewWriter(f, flate.BestCompression)
 	cmp(fl, bTs)
 
 	var infos [6]info
